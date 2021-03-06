@@ -6,3 +6,5 @@
 .page-body-picker {
   margin-bottom: 30rpx;
 }
+
+@import 'index-wxa-auto-dark.wxss'

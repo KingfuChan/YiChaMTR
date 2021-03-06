@@ -3,125 +3,164 @@ const riskLvl = require("../Resourses/risk_level.js").getriskLvl
 const lineSta = require("../Resourses/line_stations.js").getLineSta
 
 const data = { // 地图默认数据
-  scale: 12,
+  scale: 14,
   latitude: 22.534751,
   longitude: 114.025510,
 }
 
-function GenerateMarker(o, level) {
-  o["anchor"] = { "x": .5, "y": .5 }
-  switch (level) {
+function GenerateMarker(m) {
+  m.anchor = { "x": .5, "y": .5 }
+  m.callout = undefined
+  m.zIndex = riskLvl[m.name] // 数字越大，越在上层
+  switch (riskLvl[m.name]) {
     case 1:
-      o["callout"] = {
-        color: '#000',
-        bgColor: '#0f0',
-        borderRadius: 6,
-        borderColor: '#0f0',
-        fontSize: 15,
-        borderWidth: 6,
-        textAlign: 'center',
-        content: o["title"] + "\n低风险",
-        display: "BYCLICK"
-      }
-      o["iconPath"] = "../image/g.png"
-      o["width"] = "30rpx"
-      o["height"] = "30rpx"
+      m.iconPath = "../image/g.png"
+      m.width = 18
+      m.height = 18
+      m.relative_size = 18
       break;
     case 2:
-      o["callout"] = {
-        color: '#000',
-        bgColor: '#ff0',
-        borderRadius: 6,
-        borderColor: '#ff0',
-        fontSize: 15,
-        borderWidth: 6,
-        textAlign: 'center',
-        content: o["title"] + "\n中风险",
-        display: "BYCLICK"
-      }
-      o["iconPath"] = "../image/y.png"
-      o["width"] = "35rpx"
-      o["height"] = "35rpx"
+      m.iconPath = "../image/y.png"
+      m.width = 22
+      m.height = 22
+      m.relative_size = 22
       break;
     case 3:
-      o["callout"] = {
-        color: '#fff',
-        bgColor: '#f00',
-        borderRadius: 6,
-        borderColor: '#f00',
-        fontSize: 15,
-        borderWidth: 6,
-        textAlign: 'center',
-        content: o["title"] + "\n高风险",
-        display: "BYCLICK"
-      }
-      o["iconPath"] = "../image/r.png"
-      o["width"] = "40rpx"
-      o["height"] = "40rpx"
+      m.iconPath = "../image/r.png"
+      m.width = 25
+      m.height = 25
+      m.relative_size = 25
       break;
   }
-  return o
+  return m
+}
+
+function generateCallout(m) {
+  var mc = {
+    borderRadius: 6,
+    fontSize: 15,
+    borderWidth: 6,
+    textAlign: 'center',
+    display: "ALWAYS"
+  }
+  switch (riskLvl[m.name]) {
+    case 1:
+      mc.color = '#000'
+      mc.bgColor = '#0f0'
+      mc.borderColor = '#0f0'
+      mc.content = m.name + "\n风险等级：低"
+      break;
+    case 2:
+      mc.color = '#000'
+      mc.bgColor = '#ff0'
+      mc.borderColor = '#ff0'
+      mc.content = m.name + "\n风险等级：中"
+      break;
+    case 3:
+      mc.color = '#fff'
+      mc.bgColor = '#f00'
+      mc.borderColor = '#f00'
+      mc.content = m.name + "\n风险等级：高"
+      break;
+  }
+  return mc
 }
 
 Page({
+  // 页面完成渲染
   onReady: function (e) {
     // 地图相关
+    wx.getSystemInfo({
+      success: (result) => {
+        if (result.theme == "light")
+          this.setData({ mapStyle: 1 })
+        if (result.theme == "dark")
+          this.setData({ mapStyle: 2 })
+      },
+    })
+    wx.onThemeChange((result) => {
+      if (result.theme == "light")
+        this.setData({ mapStyle: 1 })
+      if (result.theme == "dark")
+        this.setData({ mapStyle: 2 })
+    })
     this.mapCtx = wx.createMapContext('myMap')
+    // 设置marker
     var mrks = stationMrk
-    this.loadData()
-
+    for (var i = 0; i < mrks.length; i++) {
+      mrks[i].id = i + 1000
+      mrks[i] = GenerateMarker(mrks[i])
+    }
+    this.setData({
+      latitude: data.latitude,
+      longitude: data.longitude,
+      scale: data.scale,
+      markers: mrks
+    })
     // 选择器相关
     var lArr = Object.keys(lineSta)
     this.setData({
       lineArray: [lArr, lineSta[lArr[0]]],
     })
   },
-  loadData: function (param) {
-    var mrks = stationMrk
-    var lat = data.latitude
-    var lon = data.longitude
-    var scl = data.scale
-    for (var i = 0; i < mrks.length; i++) {
-      mrks[i]["id"] = i
-      mrks[i] = GenerateMarker(mrks[i], riskLvl[mrks[i]["name"]])
-      if (param != undefined)  // there is param
-        if (Object.keys(param).indexOf("ctrSta") > -1)
-          if (mrks[i]["name"] == param["ctrSta"]) {
-            mrks[i]["callout"]["display"] = "ALWAYS"
-            lat = mrks[i]["latitude"]
-            lon = mrks[i]["longitude"]
-            scl = param["scale"]
-          }
-    }
-    this.setData({
-      latitude: lat,
-      longitude: lon,
-      scale: scl,
-      markers: mrks
-    })
-    console.log("Data loaded!")
-  },
+  // 点击标记
   bindmarkertap: function (e) {
-    var mrks = stationMrk
-    for (var i = 0; i < mrks.length; i++) {
-      mrks[i]["id"] = i
-      mrks[i] = GenerateMarker(mrks[i], riskLvl[mrks[i]["name"]])
+    var mrks = this.data.markers
+    for (var i in mrks) {
+      if (e.detail.markerId == mrks[i].id) {
+        mrks[i].callout = generateCallout(mrks[i])
+        mrks[i].zIndex = 4
+      }
+      else {
+        mrks[i].callout = undefined
+        mrks[i].zIndex = riskLvl[mrks[i].name]
+      }
     }
     this.setData({ markers: mrks })
   },
-  bindStationChange: function (e) { // 选择车站
+  // 地图显示区域变化
+  bindregionchange: function (e) {
+    if (e.type == "end") {
+      var mrks = this.data.markers
+      for (var i in mrks) {
+        mrks[i].height = mrks[i].relative_size / data.scale * e.detail.scale
+        mrks[i].width = mrks[i].relative_size / data.scale * e.detail.scale
+      }
+      this.setData({ markers: mrks })
+    }
+  },
+  // 选择线路车站
+  bindStationChange: function (e) {
     var lIdx = e.detail.value[0]
     var sIdx = e.detail.value[1]
     var lsDict = lineSta
     var lArr = Object.keys(lsDict)
     var sArr = Object.keys(lsDict[lArr[lIdx]])
     var sta = lsDict[lArr[lIdx]][sArr[sIdx]]
-    this.loadData({
-      "ctrSta": sta,
-      scale: 15,
+    // 设置marker
+    var dspLat = data.latitude
+    var dspLon = data.longitude
+    this.data.markers.forEach(function (m) {
+      if (m.name == sta) {
+        m.callout = generateCallout(m)
+        m.zIndex = 4
+        dspLat = m.latitude
+        dspLon = m.longitude
+      }
+      else {
+        m.zIndex = riskLvl[m.name]
+        m.callout = undefined
+      }
+    }
+    )
+    this.setData({
+      latitude: dspLat,
+      longitude: dspLon,
+      scale: data.scale,
     })
   },
-  bindLineChange: function (e) { // 选择线路
+  // 选择线路
+  bindLineChange: function (e) {
     if (e.detail.column == 0) {//第1列
       var lStaArr = lineSta
       var stas = lStaArr[Object.keys(lStaArr)[e.detail.value]]

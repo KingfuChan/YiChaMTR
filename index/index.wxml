@@ -1,6 +1,7 @@
 <view class="page-body">
   <view class="page-section page-section-gap">
-    <map id="myMap" subkey="Z5BBZ-OM6KJ-EFEF5-KMSLH-PJE4J-NXFJA" layer-style="1" bindmarkertap="bindmarkertap"
+    <map id="myMap" subkey="Z5BBZ-OM6KJ-EFEF5-KMSLH-PJE4J-NXFJA" layer-style="{{mapStyle}}"
+      bindmarkertap="bindmarkertap" bindregionchange="bindregionchange"
       style="width: 100%; height: 1100rpx; position: relative" scale="{{scale}}" latitude="{{latitude}}"
       longitude="{{longitude}}" markers="{{markers}}" show-location="true" max-scale="15" min-scale="9"
       enable-building="false"></map>

@@ -3,10 +3,15 @@
     "index/index"
   ],
   "window": {
-    "backgroundTextStyle": "light",
-    "navigationBarBackgroundColor": "#F8F8F8",
     "navigationBarTitleText": "疫查MTR",
-    "navigationBarTextStyle": "black"
+    "navigationBarBackgroundColor": "@navBgColor",
+    "navigationBarTextStyle": "@navTxtStyle",
+    "backgroundColor": "@bgColor",
+    "backgroundTextStyle": "@bgTxtStyle",
+    "backgroundColorTop": "@bgColorTop",
+    "backgroundColorBottom": "@bgColorBottom"
   },
+  "themeLocation": "theme.json",
+  "darkmode": true,
   "sitemapLocation": "sitemap.json"
 }
