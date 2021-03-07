@@ -3,8 +3,12 @@
   padding: 0 30rpx;
 }
 
-.page-body-picker {
+.page-body-btn {
   margin-bottom: 30rpx;
+  height: 90rpx;
+  display: block;
+  box-sizing: border-box;
+  position: relative
 }
 
 @import 'index-wxa-auto-dark.wxss'

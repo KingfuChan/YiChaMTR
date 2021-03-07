@@ -11,6 +11,7 @@ const data = { // 地图默认数据
 function GenerateMarker(m) {
   m.anchor = { "x": .5, "y": .5 }
   m.callout = undefined
+  m.alpha = 1
   m.zIndex = riskLvl[m.name] // 数字越大，越在上层
   switch (riskLvl[m.name]) {
     case 1:
@@ -48,23 +49,24 @@ function generateCallout(m) {
       mc.color = '#000'
       mc.bgColor = '#0f0'
       mc.borderColor = '#0f0'
-      mc.content = m.name + "\n风险等级：低"
+      mc.content = m.name + "\n" + m.lineName + "\n风险等级：低"
       break;
     case 2:
       mc.color = '#000'
       mc.bgColor = '#ff0'
       mc.borderColor = '#ff0'
-      mc.content = m.name + "\n风险等级：中"
+      mc.content = m.name + "\n" + m.lineName + "\n风险等级：中"
       break;
     case 3:
       mc.color = '#fff'
       mc.bgColor = '#f00'
       mc.borderColor = '#f00'
-      mc.content = m.name + "\n风险等级：高"
+      mc.content = m.name + "\n" + m.lineName + "\n风险等级：高"
       break;
   }
   return mc
 }
+
 
 Page({
   // 页面完成渲染
@@ -72,6 +74,8 @@ Page({
     // 地图相关
     wx.getSystemInfo({
       success: (result) => {
+        var h = result.windowHeight * 750 / result.windowWidth - 320
+        this.setData({ mapHeight: h })
         if (result.theme == "light")
           this.setData({ mapStyle: 1 })
         if (result.theme == "dark")
@@ -105,18 +109,26 @@ Page({
   },
   // 点击标记
   bindmarkertap: function (e) {
-    var mrks = this.data.markers
-    for (var i in mrks) {
-      if (e.detail.markerId == mrks[i].id) {
-        mrks[i].callout = generateCallout(mrks[i])
-        mrks[i].zIndex = 4
-      }
-      else {
-        mrks[i].callout = undefined
-        mrks[i].zIndex = riskLvl[mrks[i].name]
-      }
-    }
-    this.setData({ markers: mrks })
+    this.selectMarker({ id: e.detail.markerId })
+    // var mrks = this.data.markers
+    // for (let i in mrks) {
+    //   if (e.detail.markerId == mrks[i].id) {
+    //     mrks[i].callout = generateCallout(mrks[i])
+    //     mrks[i].zIndex = 4
+    //     var curMrk = mrks[i]
+    //   }
+    //   else {
+    //     mrks[i].callout = undefined
+    //     mrks[i].zIndex = riskLvl[mrks[i].name]
+    //   }
+    // }
+    // for (let i in mrks) {
+    //   mrks[i].alpha = 0.2
+    //   for (let j in curMrk.lineNum)
+    //     if (mrks[i].lineNum.includes(curMrk.lineNum[j]))
+    //       mrks[i].alpha = 1
+    // }
+    // this.setData({ markers: mrks })
   },
   // 地图显示区域变化
   bindregionchange: function (e) {
@@ -137,25 +149,10 @@ Page({
     var lArr = Object.keys(lsDict)
     var sArr = Object.keys(lsDict[lArr[lIdx]])
     var sta = lsDict[lArr[lIdx]][sArr[sIdx]]
-    // 设置marker
-    var dspLat = data.latitude
-    var dspLon = data.longitude
-    this.data.markers.forEach(function (m) {
-      if (m.name == sta) {
-        m.callout = generateCallout(m)
-        m.zIndex = 4
-        dspLat = m.latitude
-        dspLon = m.longitude
-      }
-      else {
-        m.zIndex = riskLvl[m.name]
-        m.callout = undefined
-      }
-    }
-    )
+    var curMrk = this.selectMarker({ name: sta })
     this.setData({
-      latitude: dspLat,
-      longitude: dspLon,
+      latitude: curMrk.latitude,
+      longitude: curMrk.longitude,
       scale: data.scale,
     })
   },
@@ -168,5 +165,27 @@ Page({
         lineArray: [Object.keys(lStaArr), stas]
       })
     }
+  },
+  selectMarker: function (info) {
+    var curMrk
+    var mrks = this.data.markers
+    mrks.forEach(function (m) {
+      if (m.name == info.name || m.id == info.id) {
+        m.callout = generateCallout(m)
+        m.zIndex = 4
+        curMrk = m
+      } else {
+        m.zIndex = riskLvl[m.name]
+        m.callout = undefined
+      }
+    })
+    mrks.forEach(function (m) {
+      m.alpha = 0.2
+      for (let j in curMrk.lineNum)
+        if (m.lineNum.includes(curMrk.lineNum[j]))
+          m.alpha = 1
+    })
+    this.setData({ markers: mrks })
+    return curMrk
   },
 })
