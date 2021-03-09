@@ -16,21 +16,21 @@ function GenerateMarker(m) {
   switch (riskLvl[m.name]) {
     case 1:
       m.iconPath = "../image/g.png"
-      m.width = 18
-      m.height = 18
-      m.relative_size = 18
+      m.width = 20
+      m.height = 20
+      m.relative_size = 20
       break;
     case 2:
       m.iconPath = "../image/y.png"
-      m.width = 22
-      m.height = 22
-      m.relative_size = 22
+      m.width = 24
+      m.height = 24
+      m.relative_size = 24
       break;
     case 3:
       m.iconPath = "../image/r.png"
-      m.width = 25
-      m.height = 25
-      m.relative_size = 25
+      m.width = 28
+      m.height = 28
+      m.relative_size = 28
       break;
   }
   return m
@@ -110,25 +110,6 @@ Page({
   // 点击标记
   bindmarkertap: function (e) {
     this.selectMarker({ id: e.detail.markerId })
-    // var mrks = this.data.markers
-    // for (let i in mrks) {
-    //   if (e.detail.markerId == mrks[i].id) {
-    //     mrks[i].callout = generateCallout(mrks[i])
-    //     mrks[i].zIndex = 4
-    //     var curMrk = mrks[i]
-    //   }
-    //   else {
-    //     mrks[i].callout = undefined
-    //     mrks[i].zIndex = riskLvl[mrks[i].name]
-    //   }
-    // }
-    // for (let i in mrks) {
-    //   mrks[i].alpha = 0.2
-    //   for (let j in curMrk.lineNum)
-    //     if (mrks[i].lineNum.includes(curMrk.lineNum[j]))
-    //       mrks[i].alpha = 1
-    // }
-    // this.setData({ markers: mrks })
   },
   // 地图显示区域变化
   bindregionchange: function (e) {
@@ -167,25 +148,31 @@ Page({
     }
   },
   selectMarker: function (info) {
-    var curMrk
     var mrks = this.data.markers
-    mrks.forEach(function (m) {
-      if (m.name == info.name || m.id == info.id) {
-        m.callout = generateCallout(m)
-        m.zIndex = 4
-        curMrk = m
-      } else {
+    var curIdx = mrks.findIndex(function (m) { return m.id == info.id || m.name == info.name })
+    var curLines = mrks[curIdx].lineNum
+    if (mrks[curIdx].id != this.lastId) { // 与上次选择不同
+      mrks.forEach(function (m) {
         m.zIndex = riskLvl[m.name]
         m.callout = undefined
-      }
-    })
-    mrks.forEach(function (m) {
-      m.alpha = 0.2
-      for (let j in curMrk.lineNum)
-        if (m.lineNum.includes(curMrk.lineNum[j]))
-          m.alpha = 1
-    })
+        m.alpha = 0.2
+        for (let j in curLines)
+          if (m.lineNum.includes(curLines[j]))
+            m.alpha = 1
+      })
+      mrks[curIdx].callout = generateCallout(mrks[curIdx])
+      mrks[curIdx].zIndex = 4
+      this.lastId = mrks[curIdx].id
+    } else { // 与上次选择相同
+      mrks.forEach(function (m) {
+        m.zIndex = riskLvl[m.name]
+        m.callout = undefined
+        m.alpha = 1
+      })
+      this.lastId = undefined
+      console.log("same")
+    }
     this.setData({ markers: mrks })
-    return curMrk
+    return mrks[curIdx]
   },
 })
