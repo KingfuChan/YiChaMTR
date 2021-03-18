@@ -12,6 +12,6 @@
       value="{{stationArray}}" range="{{lineArray}}">
       <button type="primary" class="page-body-btn">选择线路车站</button>
     </picker>
-    <button type="primary" class="page-body-btn">（暂未使用）</button>
+    <button type="primary" class="page-body-btn" bindtap="bindNormDemo">{{normdemo}}</button>
   </view>
 </view>
